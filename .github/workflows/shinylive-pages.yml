@@ -1,0 +1,73 @@
+name: AJURI Shinylive Pages
+on:
+  push:
+    branches: [main, codex/shinylive-dashboard]
+    paths: ['shinylive/**', 'scripts/export_shinylive.R', 'tests/**', 'scripts/generate_data.R', '.github/workflows/shinylive-pages.yml']
+  pull_request:
+    paths: ['shinylive/**', 'scripts/export_shinylive.R', 'tests/**', 'scripts/generate_data.R', '.github/workflows/shinylive-pages.yml']
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publish this build to GitHub Pages
+        type: boolean
+        required: false
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: shinylive-pages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::shinylive
+            any::shiny
+            any::bslib
+            any::dplyr
+            any::tidyr
+            any::purrr
+            any::tibble
+            any::ggplot2
+            any::stringr
+            any::forcats
+            any::lubridate
+            any::gt
+            any::gtsummary
+            any::labelled
+            any::plotly
+            any::scales
+            any::bsicons
+            any::readr
+            any::testthat
+            any::withr
+      - name: Test CSV imports and session isolation
+        run: Rscript tests/test_shinylive.R
+      - name: Validate simulated data against the dictionary
+        run: Rscript tests/test_simulated_data.R
+      - name: Export browser app
+        run: Rscript scripts/export_shinylive.R
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,22 @@
+_site/
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
+# Never commit data. Real exports live in Box; synthetic data is regenerated
+# by scripts/generate_data.R (tests do this in a temp dir).
+/data/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.rds
+*.RData
+*.sav
+*.dta
+*.pdf
+# Public metadata bundled into the site (no participant records):
+!shinylive/www/ajuri-csv-template.csv
+!shinylive/data/AJURI_DataDictionary_*.csv
